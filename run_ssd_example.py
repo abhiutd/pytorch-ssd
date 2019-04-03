@@ -48,8 +48,11 @@ else:
 
 orig_image = cv2.imread(image_path)
 image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
-boxes, labels, probs = predictor.predict(image, 10, 0.4)
-
+### generate trace module
+traced_script_module = torch.jit.trace(net, image, check_trace=False)
+traced_script_module.save("libtorch/" + net_type + ".pt")
+#boxes, labels, probs = predictor.predict(image, 10, 0.4)
+'''
 for i in range(boxes.size(0)):
     box = boxes[i, :]
     cv2.rectangle(orig_image, (box[0], box[1]), (box[2], box[3]), (255, 255, 0), 4)
@@ -64,3 +67,4 @@ for i in range(boxes.size(0)):
 path = "run_ssd_example_output.jpg"
 cv2.imwrite(path, orig_image)
 print(f"Found {len(probs)} objects. The output image is {path}")
+'''

@@ -1,4 +1,4 @@
-from vision.ssd.vgg_ssd import create_vgg_ssd, create_vgg_ssd_predictor
+#from vision.ssd.vgg_ssd import create_vgg_ssd, create_vgg_ssd_predictor
 from vision.ssd.mobilenetv1_ssd import create_mobilenetv1_ssd, create_mobilenetv1_ssd_predictor
 from vision.ssd.mobilenetv1_ssd_lite import create_mobilenetv1_ssd_lite, create_mobilenetv1_ssd_lite_predictor
 from vision.ssd.squeezenet_ssd_lite import create_squeezenet_ssd_lite, create_squeezenet_ssd_lite_predictor
@@ -25,9 +25,9 @@ class_names = [name.strip() for name in open(label_path).readlines()]
 num_classes = len(class_names)
 
 
-if net_type == 'vgg16-ssd':
-    net = create_vgg_ssd(len(class_names), is_test=True)
-elif net_type == 'mb1-ssd':
+#if net_type == 'vgg16-ssd':
+#    net = create_vgg_ssd(len(class_names), is_test=True)
+if net_type == 'mb1-ssd':
     net = create_mobilenetv1_ssd(len(class_names), is_test=True)
 elif net_type == 'mb1-ssd-lite':
     net = create_mobilenetv1_ssd_lite(len(class_names), is_test=True)
@@ -40,9 +40,9 @@ else:
     sys.exit(1)
 net.load(model_path)
 
-if net_type == 'vgg16-ssd':
-    predictor = create_vgg_ssd_predictor(net, candidate_size=200)
-elif net_type == 'mb1-ssd':
+#if net_type == 'vgg16-ssd':
+#    predictor = create_vgg_ssd_predictor(net, candidate_size=200)
+if net_type == 'mb1-ssd':
     predictor = create_mobilenetv1_ssd_predictor(net, candidate_size=200)
 elif net_type == 'mb1-ssd-lite':
     predictor = create_mobilenetv1_ssd_lite_predictor(net, candidate_size=200)
@@ -62,9 +62,13 @@ while True:
         continue
     image = cv2.cvtColor(orig_image, cv2.COLOR_BGR2RGB)
     timer.start()
-    boxes, labels, probs = predictor.predict(image, 10, 0.4)
+    ### generate trace module
+    fake_input = torch.rand(1, 3, 224, 224)
+    traced_script_module = torch.jit.trace(net, fake_input, check_trace=False)
+    traced_script_module.save("libtorch/" + net_type + ".pt")
+    #boxes, labels, probs = predictor.predict(image, 10, 0.4)
     interval = timer.end()
-    print('Time: {:.2f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
+    '''print('Time: {:.2f}s, Detect Objects: {:d}.'.format(interval, labels.size(0)))
     for i in range(boxes.size(0)):
         box = boxes[i, :]
         label = f"{class_names[labels[i]]}: {probs[i]:.2f}"
@@ -79,5 +83,6 @@ while True:
     cv2.imshow('annotated', orig_image)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
+    '''
 cap.release()
 cv2.destroyAllWindows()
